@@ -53,4 +53,3 @@ async def ensure_fresh(
     if not is_expired(token, now):
         return token
     return await refresh(transport, token)
-
