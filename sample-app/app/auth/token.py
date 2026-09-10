@@ -43,8 +43,14 @@ async def refresh(transport: Transport, token: TokenSet) -> TokenSet:
     )
 
 
-async def ensure_fresh(transport: Transport, token: TokenSet) -> TokenSet:
-    """만료가 임박했으면 갱신하고, 아니면 그대로 돌려준다."""
-    if not is_expired(token):
+async def ensure_fresh(
+    transport: Transport,
+    token: TokenSet,
+    *,
+    now: float | None = None,
+) -> TokenSet:
+    """Refresh near-expiry tokens, optionally using an explicit decision time."""
+    if not is_expired(token, now):
         return token
     return await refresh(transport, token)
+
