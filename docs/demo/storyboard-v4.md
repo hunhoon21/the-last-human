@@ -63,7 +63,7 @@
 | 9 | 01:04–01:16 | **T4** | 본인이 발견함 [TARGET] | "Look here — Open sample-app/app/http_client.py and check what the code actually does." → 발췌 `sample-app/app/http_client.py` L14–29(`MAX_ATTEMPTS = 3`) + L38–57(`for attempt in range(1, MAX_ATTEMPTS + 1):`). L49 줌 · 자막 "3 × 3 = 9" · 2초 침묵 | The hold shows the neighboring file. There it is — a second retry loop, already in place. Three times three. *(2s)* The author sees it for the first time. |
 | 10 | 01:16–01:24 | **T4** | 이 결함은 실재함 · 우리는 한 단계 앞 [근거] | 좌측 보류 화면 유지, 우측 패널에 GitHub 사후 분석 원문 — "Errors in those services triggered a **client-side retry loop** that increased traffic during recovery." · 대응 "consistent retry limits, **retry budgets**, and variable timeouts" · 캡션 "GitHub Blog · The August 17 outage, and the work ahead · Vlad Fedorov · 2026-08-20 · 7h 47m" | This kind of loop made GitHub's August outage worse. The gate didn't find the bug — it asked the person who had to. |
 | 11 | 01:24–01:34 | **T5** | 고침 → 게이트가 다시 물음 → 사람이 머지 [TARGET] | 수정 커밋 `fix(auth): stop retrying in ensure_fresh — post_json already retries` → 카드가 "Awaiting author explanation"으로 복귀 → 새 질문(Q2 "How many times in total can a single token refresh request reach the identity provider…?" → "Up to 3 times") → 둘 다 **Accepted** → 카드 **Human Verified** + SHA · 여섯째 줄 채워짐 → **Merge pull request** | They fix it. A new commit, so the gate asks again. This time it holds up — human-verified, on record. A person merges. |
-| 12 | 01:34–01:39 | **T6** | 금지가 아님 [TARGET] | 저위험 문서 PR #27: `The Last Human — Check not required` · `comprehension-gate — Comprehension check not required` · Merge 활성 | Nothing is banned. Low-risk changes go straight through. |
+| 12 | 01:34–01:39 | **T6** | 금지가 아님 [TARGET] | 저위험 문서 PR #27: 제목 스포트라이트 + 라벨 "docs-only change" → `The Last Human — Check not required` · `comprehension-gate — Comprehension check not required` · Merge 활성 | A docs-only change? Nothing is banned. Low-risk changes go straight through. |
 | 13 | 01:39–01:53 | **T7** | 조직은 이제 누가 답할 수 있는지 앎 [TARGET · Demo data] | 대시보드: KPI "Human-verified before merge" → Coverage by zone의 `sample-app/app/auth/` 행, Can answer **0 → 1** (머지 전 정지 화면과 분할) → "counts, never names". Demo data 칩 | Per module: how many people can answer for it. Authentication had no one on record — now one. Counts, never names. *(0.5s)* If that loop ever fires here, someone already understood this change. |
 | 14 | 01:53–01:58 | — | 기장은 여전히 사람임 [연출] | PIC 카드 | Copilot can fly. The pilot in command is still responsible. |
 | 15 | 01:58–02:00 | — | 마무리 [연출] | 태그라인 카드, 무음: "AI-generated code. Human-owned decisions." | *(무음)* |
@@ -78,8 +78,8 @@
 | T2 | 6 | ✓ | ✓ | 대기 | 10.5s / 10s | Q1 문장이 끝난 뒤 스크롤 |
 | T3 | 7 | ✓ | ✓ | 대기 | 6.5s / 6s | 채점 대기 Time compressed · T2에서 0.3s 크로스페이드 |
 | T4 | 8·9·10 | ✓ | ✓ | 대기 | 27.5s / 27s | 우측 인용 패널(안 A) |
-| T5 | 11 | 일부 | 가편집 | 대기 | 11.7s / 10s | Merge 클릭 2s는 TBC 카드 — #22 머지 시 촬영·교체 |
-| T6 | 12 | ✓ | ✓ | 대기 | 5.0s / 5s | |
+| T5 | 11 | 일부 | 가편집 | 대기 | 21.3s / 10s | 이해도 기준으로 화면마다 ≥2s. Merge 클릭 2s는 TBC 카드 — #22 머지 시 촬영·교체 |
+| T6 | 12 | 재촬영 | 임시 | 대기 | 6.1s / 5s | 컷 12 문구 변경("A docs-only change? …") · 상단부터 시작하는 raw 재촬영 후 교체 |
 | T7 | 13 | — | — | — | — / 14s | #22 머지 후 대시보드 |
 
 ## 5. English VO — 대본과 TTS 실측
@@ -108,7 +108,7 @@
 >
 > They fix it. A new commit, so the gate asks again. This time it holds up — human-verified, on record. A person merges.
 >
-> Nothing is banned. Low-risk changes go straight through.
+> A docs-only change? Nothing is banned. Low-risk changes go straight through.
 >
 > Per module: how many people can answer for it. Authentication had no one on record — now one. Counts, never names. *(0.5s)* If that loop ever fires here, someone already understood this change.
 >
@@ -131,12 +131,12 @@ Azure Speech(en-US-AndrewMultilingualNeural)로 컷 단위 생성한 실측. 침
 | 9 | 01:04 | 12s | 11.3s | +0.7s | 0% | T4 · 2s 침묵 포함 |
 | 10 | 01:16 | 8s | 7.1s | +0.9s | 0% | T4 |
 | 11 | 01:24 | 10s | 8.6s | +1.4s | 0% | T5 |
-| 12 | 01:34 | 5s | 3.6s | +1.4s | 0% | T6 |
+| 12 | 01:34 | 5s | 5.1s | −0.1s | 0% | T6 |
 | 13 | 01:39 | 14s | 13.1s | +0.9s | 0% | T7 · 0.5s 침묵 포함 |
 | 14 | 01:53 | 5s | 4.4s | +0.6s | 0% | |
 | 15 | 01:58 | 2s | — | — | — | 무음 카드 |
 
-합계 120초 · 음성 283단어(약 104초) + 의도된 침묵 2.5초 · 컷 사이 숨 약 14초. 시간이 넘치면 자르는 순서: 컷 10의 둘째 문장 → 컷 12를 6→5초 → 컷 2의 연구 자막. 컷 9의 침묵과 대시보드는 자르지 않음.
+합계 120초 · 음성 286단어(약 106초) + 의도된 침묵 2.5초 · 컷 사이 숨 약 14초. 시간이 넘치면 자르는 순서: 컷 10의 둘째 문장 → 컷 12를 6→5초 → 컷 2의 연구 자막. 컷 9의 침묵과 대시보드는 자르지 않음.
 
 ## 6. 대시보드 — 세 줄 정의
 
