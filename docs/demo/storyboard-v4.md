@@ -39,18 +39,22 @@
 
 제품은 00:15–00:25에 질문의 답으로 소개함: **"before a risky change merges, its author explains it — from the code. A check, not a ban."** 구성요소는 한꺼번에 나열하지 않고, 쓰이는 장면에서 화면에 보이는 이름 그대로 등장시킴. 내레이션은 일반어(the gate · the bot · the dashboard)를 씀.
 
-넷 다 있어야 하는 층임. Gate는 "이 변경"에, Dashboard는 "이 조직"에 답하고, Bot은 Gate를 채우는 유일한 방법이며, Relay는 판정이 코드가 사는 곳에서 재계산되게 함.
+넷 다 있어야 하는 층임. Gate는 "이 변경"에, Dashboard는 "이 조직"에 답하고, Bot은 Gate를 채우는 유일한 방법이며, Relay는 성공 기록이 현재 코드에도 유효한지 독립적으로 확인함.
+
+이 넷은 제품의 기능 역할이지 각각 설치하는 서비스가 아님. **Bot은 TLH Server에서 실행되고, GitHub App은 서버가 GitHub에 접근하는 신원·권한 주체**임. App 등록, 대상 저장소 설치, 작성자의 OAuth 로그인은 서로 다른 절차임.
 
 | 층 | 화면에 보이는 이름 | 역할 | 왜 있어야 하나 | 등장 |
 | --- | --- | --- | --- | --- |
-| **Gate** | 필수 체크 "Last Human — Awaiting author explanation" → "Human-verified · SHA" / "Not required" | 작성자의 확인 없이는 머지 불가. 임계값 미달은 Not required로 지나감 | 제품의 약속 그 자체. 없으면 조언 도구 | 00:25 대기 · 01:24 통과 · 01:34 미발동 |
+| **Gate** | 필수 체크 "Last Human — Awaiting author explanation" → "Human-verified · SHA" / "Not required" | 필수 gate로 설정된 위험한 변경은 작성자의 유효한 확인 없이는 머지 불가. 임계값 미달은 Not required로 지나감 | 제품의 약속 그 자체. 없으면 조언 도구 | 00:25 대기 · 01:24 통과 · 01:34 미발동 |
 | **Bot** | 같은 줄의 카드 · 웹 면담 "Explain the change — from the code" · Accepted / Hold | 위험 근거 요약, 질문 생성, 채점, 현재 커밋에 묶인 기록 | Gate를 채우는 유일한 방법 | 00:41–01:24 |
-| **Relay** | "Last Human · relay / Relay PR #n", "Verify receipt …" | GitHub 이벤트를 OIDC로 서버에 전달하고, 영수증을 GitHub 쪽에서 재계산해 검증 | 판정이 코드가 사는 곳에서 다시 계산되고 로그로 남음 · 비밀 없이 저장소에 묶인 신원 · 서버를 사내망에 둘 수 있음 | 체크 목록 · Actions |
+| **Relay** | "Last Human · relay / Relay PR #n", "Verify receipt …" | 이벤트·snapshot binding을 OIDC로 전달하고, 현재 코드의 snapshot·위험도를 독립 재계산해 성공 기록과 대조 | 코드와 기록의 결속을 GitHub 쪽에서도 확인 · 공유 장기 시크릿 없이 저장소에 묶인 신원 · 네트워크 조건을 갖추면 사내망 배치 가능 | 체크 목록 · Actions |
 | **Dashboard** | "Last Human dashboard" · "Human-verified before merge" · "Can answer" | CODEOWNERS 구역별 확인 비율·답할 수 있는 사람 수·예외·근거 PR. 이름 없이 수만 | Gate는 변경에, Dashboard는 조직에 답함. 어디까지 에이전트를 열어도 되는지의 지도 | 01:39 |
 
 **Human-verified**는 Gate가 통과했을 때의 변경의 상태. 새 커밋이 오면 무효가 되고 Gate가 다시 물음. 사람에게 자격이나 등급을 주지 않음. Relay의 대가: 러너 기동 지연(20–40초), Actions 분 사용, 체크 목록에 한 줄 더.
 
-현재 구현은 Gate가 두 줄(커밋 status `comprehension-gate` + check run "The Last Human")로 보임. 한 줄로 합치는 것은 다음 단계.
+**화면 표현과 구현 식별자는 구분함.** #32 이후 실사용 필수 status의 기본 식별자는 `last-human/human-verified`, 설명은 Awaiting author explanation → Human-verified / Not required — below risk threshold임. 보조 Check "The Last Human"은 `TLH_CHECK_RUNS=true`일 때 별도로 표시됨. 위 표의 한 줄 통합은 목표 UX이며 다음 단계임. Required 여부와 발급 App은 저장소 관리자가 보호 규칙으로 지정함.
+
+아래 촬영표에는 명칭 변경 전 화면 기록도 포함됨. 기존 테이크·내레이션은 보존하고, 재촬영할 때는 #32의 표기를 적용함.
 
 ## 4. 장면별 스토리라인과 테이크
 
@@ -152,7 +156,26 @@ Azure Speech(en-US-AndrewMultilingualNeural)로 컷 단위 생성한 실측. 침
 
 ## 7. 아키텍처와 데이터 흐름
 
-영상에서는 뺐고 발표 슬라이드와 Q&A에서 씀. 서버는 조직이 두는 곳에서 돌고, 쓰기 주체는 서버 하나, 모델은 보조.
+영상에서는 뺐고 발표 슬라이드와 Q&A에서 씀. 서버는 TLH 운영자가 두는 곳에서 돌고, TLH gate·카드·보조 Check의 쓰기 주체는 서버 하나, 모델은 보조.
+
+### GitHub App 연결과 최초 설치
+
+| 순서 | 담당 | 준비·설정 |
+| --- | --- | --- |
+| 1 | TLH 운영자 | **TLH Server 운영 + GitHub App 등록**. 서버의 HTTPS 주소와 같은 App의 OAuth callback을 연결 |
+| 2 | 고객 저장소 관리자 | **대상 저장소에 App 설치**. 선택 저장소와 필요한 권한 승인 |
+| 3 | 운영자 / 저장소 관리자 | 서버의 repository·installation 연결 + 신뢰된 workflow·정책 파일 적용 + 필수 status와 발급 App 설정 |
+| 4 | PR 작성자 | 같은 App의 **별도 OAuth 로그인** 후 TLH Server에서 변경 설명 |
+
+App 설치는 저장소 접근 권한을 부여하는 절차임. **서버 호스팅, workflow·정책 파일 추가, 보호 규칙 설정을 자동으로 해 주지는 않음.** 서버는 선택 저장소의 installation token으로 GitHub API를 호출하고, 작성자는 user OAuth로 신원을 확인함. Actions의 단기 workflow/OIDC 토큰은 이 둘과 다른 실행 신원임.
+
+보조 Check를 켜려면 App의 `Checks: Read and write`와 설치 업데이트 승인이 필요함. Checks 전용 토큰은 따로 사용하며, #32가 Actions에 `checks: read`나 gate 쓰기 권한을 추가한 것은 아님. 기존 가이드의 `Only on this account`는 도그푸딩 범위이므로 고객 조직 설치에는 App 설치 가능 범위와 조직 승인도 맞춰야 함.
+
+**현재 고객 데모의 전제:** workflow는 대상 저장소의 신뢰된 기본 브랜치에서 `pip install -e '.[bot]'`로 TLH를 설치함. TLH 소스가 없는 고객 저장소에는 버전을 고정한 별도 verifier 배포와 설치 템플릿이 필요함. 서버도 하나의 repository·installation 설정을 사용하므로 App 설치만으로 다른 저장소가 자동 연결되지는 않음. 기존 데모와 병행하려면 별도 설정·포트·DB를 가진 TLH Server 인스턴스를 두는 범위로 시작함. 상세 설정은 [App 실행 가이드](../runbooks/github-app.md)를 따름.
+
+### 설치 이후의 런타임 흐름
+
+그림의 GitHub 영역은 제품 상태와 목표 통합 UX를 보여 줌. 실제 status 식별자와 보조 Check의 구분은 아래 구현 각주를 따름.
 
 ```
                      The Last Human — Component architecture & data flow
@@ -172,18 +195,21 @@ Azure Speech(en-US-AndrewMultilingualNeural)로 컷 단위 생성한 실측. 침
 │  GitHub Actions (runners)                              │                                   │ │
 │  ┌───────────────────────────────────────────────┐     │                                   │ │
 │  │ Relay — on PR open / new commit          ①    │     │                                   │ │
-│  │   forwards PR metadata + OIDC identity ──────┼─────┼──── ② ────────────────────────┐   │ │
+│  │   reads PR → computes snapshot/risk           │     │                                   │ │
+│  │   forwards binding + OIDC identity ──────────┼─────┼──── ② ────────────────────────┐   │ │
 │  │                                               │     │                                │   │ │
 │  │ Verify — dispatched by the server        ⑤    │     │                                │   │ │
-│  │   checkout repo → recompute snapshot          │     │                                │   │ │
+│  │   trusted runtime → read PR → recompute       │     │                                │   │ │
 │  │   → compare with server's receipt             │     │                                │   │ │
-│  │   → verified ✓ / ✗  (logged in Actions)  ─────┼─────┼─── ⑤' result ──────────────┐  │   │ │
-│  │ carries metadata only · no secrets · no write │     │                             │  │   │ │
+│  │   → submit binding + OIDC                ─────┼─────┼─── ⑤' verify request ──────┐  │   │ │
+│  │ Observe ⑥' latest GitHub gate → ✓ / ✗         │     │                             │  │   │ │
+│  │ to server: metadata + short-lived tokens      │     │                             │  │   │ │
+│  │ no App/model keys · no gate writes            │     │                             │  │   │ │
 │  └───────────────────────────────────────────────┘     │                             │  │   │ │
 └────────────────────────────────────────────────────────┼─────────────────────────────┼──┼───┼─┘
                                                          │                             ▼  ▼   │
 ┌────────────────────┐                 ┌──────────────────────────────────────────────────────┴─┐
-│ Author (browser)   │── ③ answers ──►│ The Last Human server (Bot)                             │
+│ Author (browser)   │── ③ answers ──►│ TLH Server (Bot)                                        │
 │ GitHub sign-in     │◄─ Accepted/Hold─│ where the org runs it — reachable by runners & people   │
 │ two questions,     │   + evidence    │ (public tunnel today · VPN + self-hosted runners for    │
 │ one line each      │                 │  a private deployment) · not a GitHub webhook receiver  │
@@ -191,9 +217,10 @@ Azure Speech(en-US-AndrewMultilingualNeural)로 컷 단위 생성한 실측. 침
                                        │  Gate logic   diff → risk score → structure facts →     │
 ┌────────────────────┐                 │               questions → grading                       │
 │ Org / leads        │── ⑨ reads ────►│  Receipts     ④ bound to head SHA (new commit ⇒ void)  │
-│ (browser)          │                 │  Publisher    ⑥ status · card  — the ONLY writer        │
+│ (browser)          │                 │  Publisher    ⑥ status · card · supplemental Check     │
 └────────────────────┘                 │  Dashboard    ⑦ per-CODEOWNERS-zone coverage           │
                                        │  Store        snapshots · questions · receipts · merges │
+                                       │  Verify       re-check receipt/current PR/binding       │
                                        │  Policy       risk rules · prompts (human-approved,     │
                                        │               versioned into every snapshot)            │
                                        └───────────────────────────┬─────────────────────────────┘
@@ -202,7 +229,7 @@ Azure Speech(en-US-AndrewMultilingualNeural)로 컷 단위 생성한 실측. 침
                                        ┌─────────────────────────────────────────────────────────┐
                                        │ Model (Azure OpenAI) — assistive only                   │
                                        │ writes the questions · grades the one-line evidence     │
-                                       │ never writes to GitHub · never sees credentials         │
+                                       │ no GitHub write or merge authority                      │
                                        └─────────────────────────────────────────────────────────┘
 ```
 
@@ -211,32 +238,39 @@ Azure Speech(en-US-AndrewMultilingualNeural)로 컷 단위 생성한 실측. 침
 | # | From → To | 무엇이 움직이나 | 왜 중요한가 |
 | --- | --- | --- | --- |
 | ① | GitHub → Actions | PR 열림 / 새 커밋이 Relay를 시작 | 우리 쪽에 웹훅 수신자가 필요 없음 |
-| ② | Relay → Server | PR 메타데이터 + **OIDC 신원**(repo · workflow · repo id) | 이 저장소의 워크플로만 받음. 공유 시크릿 없음 |
-| ②' | Server ↔ Model | diff 사실 → 질문 두 개; 근거 한 줄 → 판정 | 모델은 제안만, 게이트를 결정하지 않음 |
-| ③ | Author ↔ Server | 보기 + 근거 한 줄 → Accepted / Hold + 근거 발췌 | 답변은 서버에만 남고 공개되지 않음 |
-| ④ | Server | head SHA에 묶인 영수증 | 새 커밋 ⇒ 영수증 무효 ⇒ 게이트가 다시 물음 |
-| ⑤ | Server → Actions | **Verify** dispatch: 러너가 저장소를 체크아웃해 **스냅샷을 재계산**하고 영수증과 비교 | 통과가 코드가 사는 곳에서 다시 유도되고 로그로 남음 |
-| ⑤' | Actions → Server | verified ✓ / ✗ | 서버는 이 뒤에만 발행 |
-| ⑥ | Server → GitHub | 체크: Awaiting → **Human-verified · sha** / Not required; 카드 | 서버가 유일한 쓰기 주체 |
+| ② | Relay → Server | PR 메타데이터·재계산한 snapshot binding + **OIDC 신원**(repo · workflow · repo id) | 신뢰된 실행인지와 서버 계산의 일치를 확인. PR 닫힘 이벤트는 별도 메타데이터 경로 |
+| ②' | Server ↔ Model | diff 사실 → 질문 두 개; 근거 한 줄 → 평가 | 모델 평가는 면담 판정에 쓰이지만 GitHub 게시·머지 권한은 없음 |
+| ③ | Author ↔ Server | 보기 + 근거 한 줄 → Accepted / Hold + 근거 발췌 | 원문은 공개 PR에 남기지 않음. 평가에 필요한 근거는 모델에 전달 |
+| ④ | Server | head SHA 등 현재 검토 리비전에 묶인 성공 영수증 | 새 커밋에 이전 인증을 재사용하지 않음. 과거 성공 기록은 보존 |
+| ⑤ | Server → Actions | **Verify** dispatch: 신뢰된 runtime으로 대상 PR을 읽어 **snapshot·위험도를 재계산**, 영수증의 binding과 비교 | PR head 코드를 실행하거나 영수증을 다시 만들거나 답변을 재채점하지 않음 |
+| ⑤' | Actions → Server | 재계산한 binding + OIDC로 검증 요청 | 서버도 receipt·현재 PR·새 snapshot을 대조한 뒤 verified 기록과 발행 작업 저장 |
+| ⑥ | Server → GitHub | 상태: Awaiting → **Human-verified · sha** / Not required; 카드·보조 Check | TLH 게시 주체는 서버. Human-verified 발행은 검증 뒤, 대기·미발동 상태는 별도 경로 |
+| ⑥' | Actions → GitHub | 현재 SHA의 최신 gate status를 읽고 해당 receipt의 실제 성공 게시 확인 | 서버 응답이나 과거 성공만으로 완료 처리하지 않음 |
 | ⑦ | Store + CODEOWNERS → Dashboard | 구역별 머지 전 확인 비율, 답할 수 있는 사람 수, 예외, 근거 PR | 이름 없이 수만 |
 | ⑧ | Person → GitHub | Merge | 봇은 절대 아님 |
 | ⑨ | Org → Server | 대시보드 열람 | 다음에 에이전트를 어디까지 열지 |
+
+영수증의 결속은 head SHA뿐 아니라 repo/PR·base SHA·정책·snapshot·위험도와 작성자·App/installation·질문 버전도 포함함. `Human-verified · sha`는 화면 표현이며 SHA를 status 식별자에 붙이지 않음.
 
 **구성요소와 실행 위치**
 
 | 구성요소 | 실행 위치 | 갖고 있는 것 | 할 수 없는 것 |
 | --- | --- | --- | --- |
-| **Gate** | GitHub — PR의 필수 체크 | 상태 하나: awaiting / human-verified / not required | 스스로 판단 — Bot이 채움 |
-| **Bot** | The Last Human server | 앱 자격증명, 저장소, 정책 | 이 저장소의 워크플로나 로그인한 사람 외에는 호출 불가 |
-| **Relay** | GitHub Actions | 단기 OIDC 신원, PR 메타데이터, Verify용 체크아웃 | 비밀 보유, GitHub 쓰기, 모델 접근 |
+| **Gate** | GitHub — PR의 필수 status | 제품 상태: awaiting / human-verified / not required | 스스로 판단 — Bot이 채움 |
+| **Bot** | TLH Server | App 자격증명, 대상 repository/installation, 정책 | 보호된 업무 API는 인가된 workflow·사용자만 이용 가능 |
+| **Relay** | GitHub Actions | 단기 workflow/OIDC 토큰, 신뢰된 runtime, 대상 코드 읽기·snapshot 계산 | App private key·모델 자격 보유, TLH gate·카드·Check 게시, 답변 재채점 |
 | **Dashboard** | 같은 서버 | 집계 수치 + 표기된 데모 시드 | 이름·순위·개인 이력 표시 |
-| **Model** | Azure OpenAI | 영속 데이터 없음 | 무엇도 쓰지 못함, 보조만 |
+| **Model** | Azure OpenAI | 추론 요청·평가 결과. 서비스의 데이터 처리·보관은 계약과 설정에 따름 | GitHub 게시·머지, TLH 기록 직접 갱신 |
 
-**신뢰 경계 셋**: GitHub ↔ Actions(GitHub이 보증) · Actions ↔ Server(OIDC, 저장소에 묶임) · 사람 ↔ Server(같은 App의 GitHub 로그인). 비밀은 서버 안에서만 삶.
+**신뢰 경계**: GitHub App installation ↔ Server(선택 저장소의 API 권한) · GitHub ↔ Actions(실행 신원) · Actions ↔ Server(OIDC와 binding 대조) · 사람 ↔ Server(같은 App의 OAuth 로그인과 작성자 인가).
 
-**웹훅 대신 Relay인 이유**: 통과가 우리 서버의 주장이 아니라 GitHub 쪽에서 재계산·기록됨, 공유 시크릿 없이 저장소에 묶인 신원, 서버를 사내망에 둘 수 있음(self-hosted 러너 + VPN). 대가: 러너 기동 지연, 체크 목록 한 줄.
+App private key·client secret·모델 자격은 서버에서 관리하고 Actions에 넘기지 않음. **Actions에도 단기 GitHub/OIDC 자격은 있으므로 “비밀이 전혀 없음”은 아님.** App 비밀을 프롬프트에 의도적으로 넣지 않지만 코드·설명 근거는 모델에 전달되므로, 민감 정보 유입 방지와 모델 서비스의 보관 정책은 별도로 다룸. 보류 답변·피드백은 임시 상태로만 두고 성공한 근거만 영구 보관함.
 
-*현재 구현은 Gate가 두 줄(status `comprehension-gate` + check run "The Last Human")로 보임. 한 줄로 합치는 것은 다음 단계.*
+**웹훅 대신 Relay인 이유**: 현재 코드와 성공 기록의 결속을 GitHub 쪽에서도 독립 계산·확인하고 실행 로그로 남김. 사전 공유한 장기 시크릿 대신 OIDC를 사용하며, self-hosted 러너와 사용자 접속 경로를 갖추면 서버를 사내망에 둘 수 있음. 현재 데모의 공개 터널도 같은 TLH Server 연결 방식임. 대가: 러너 기동 지연, 체크 목록 한 줄.
+
+*#32 이후 실사용 필수 status의 기본 식별자는 `last-human/human-verified`임(개발은 `last-human/human-verified-dev`). 보조 Check "The Last Human"은 선택적으로 별도 표시되며 한 줄 통합은 다음 단계임. 저위험은 제품상 neutral/Not required이고 commit status에는 `success`, 보조 Check에는 `neutral`로 게시됨. Required 적용은 저장소 보호 규칙이 담당함.*
+
+**운영 전환은 별도:** #32 머지만으로 실행 중인 서버나 기존 설정이 바뀌지는 않음. 새 서버 코드와 `TLH_STATUS_CONTEXT`를 반영하고 재시작한 뒤, 열린 PR을 `sync --pr N`으로 동기화해 새 status를 게시함. 새 결과가 나온 것을 확인하고 필수 status와 발급 App을 전환하되 보호가 없는 구간을 만들지 않음. 환경에 명시된 옛 context는 새 기본값보다 우선하며, 과거 status 이력은 이름 변경으로 지워지지 않음.
 
 ---
 
