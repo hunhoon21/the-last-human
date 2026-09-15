@@ -52,9 +52,7 @@
 
 **Human-verified**는 Gate가 통과했을 때의 변경의 상태. 새 커밋이 오면 무효가 되고 Gate가 다시 물음. 사람에게 자격이나 등급을 주지 않음. Relay의 대가: 러너 기동 지연(20–40초), Actions 분 사용, 체크 목록에 한 줄 더.
 
-**화면 표현과 구현 식별자는 구분함.** #32 이후 실사용 필수 status의 기본 식별자는 `last-human/human-verified`, 설명은 Awaiting author explanation → Human-verified / Not required — below risk threshold임. 보조 Check "The Last Human"은 `TLH_CHECK_RUNS=true`일 때 별도로 표시됨. 위 표의 한 줄 통합은 목표 UX이며 다음 단계임. Required 여부와 발급 App은 저장소 관리자가 보호 규칙으로 지정함.
-
-아래 촬영표에는 명칭 변경 전 화면 기록도 포함됨. 기존 테이크·내레이션은 보존하고, 재촬영할 때는 #32의 표기를 적용함.
+위 표는 Gate의 상태를 요약한 표현임. 필수 status의 기본 식별자는 `last-human/human-verified`이며, 보조 Check "The Last Human"은 `TLH_CHECK_RUNS=true`일 때 별도로 표시됨. Required 여부와 발급 App은 저장소 관리자가 보호 규칙으로 지정함.
 
 ## 4. 장면별 스토리라인과 테이크
 
@@ -169,13 +167,13 @@ Azure Speech(en-US-AndrewMultilingualNeural)로 컷 단위 생성한 실측. 침
 
 App 설치는 저장소 접근 권한을 부여하는 절차임. **서버 호스팅, workflow·정책 파일 추가, 보호 규칙 설정을 자동으로 해 주지는 않음.** 서버는 선택 저장소의 installation token으로 GitHub API를 호출하고, 작성자는 user OAuth로 신원을 확인함. Actions의 단기 workflow/OIDC 토큰은 이 둘과 다른 실행 신원임.
 
-보조 Check를 켜려면 App의 `Checks: Read and write`와 설치 업데이트 승인이 필요함. Checks 전용 토큰은 따로 사용하며, #32가 Actions에 `checks: read`나 gate 쓰기 권한을 추가한 것은 아님. 기존 가이드의 `Only on this account`는 도그푸딩 범위이므로 고객 조직 설치에는 App 설치 가능 범위와 조직 승인도 맞춰야 함.
+보조 Check는 App의 `Checks: Read and write` 권한 승인 후 전용 토큰으로 게시함. 고객 조직에 설치할 때는 App의 설치 가능 범위와 조직 승인 조건을 충족해야 함.
 
-**현재 고객 데모의 전제:** workflow는 대상 저장소의 신뢰된 기본 브랜치에서 `pip install -e '.[bot]'`로 TLH를 설치함. TLH 소스가 없는 고객 저장소에는 버전을 고정한 별도 verifier 배포와 설치 템플릿이 필요함. 서버도 하나의 repository·installation 설정을 사용하므로 App 설치만으로 다른 저장소가 자동 연결되지는 않음. 기존 데모와 병행하려면 별도 설정·포트·DB를 가진 TLH Server 인스턴스를 두는 범위로 시작함. 상세 설정은 [App 실행 가이드](../runbooks/github-app.md)를 따름.
+**저장소 연결:** 서버는 하나의 repository·installation 설정을 사용하며, App 설치만으로 다른 저장소가 자동 연결되지는 않음. 기본 workflow는 대상 저장소의 TLH 소스를 설치하므로, TLH 소스가 없는 저장소에는 버전을 고정한 별도 verifier 배포와 설치 템플릿이 필요함. 상세 설정은 [App 실행 가이드](../runbooks/github-app.md)를 따름.
 
 ### 설치 이후의 런타임 흐름
 
-그림의 GitHub 영역은 제품 상태와 목표 통합 UX를 보여 줌. 실제 status 식별자와 보조 Check의 구분은 아래 구현 각주를 따름.
+그림의 GitHub 영역은 Gate의 상태를 한 줄로 요약한 개념도임. 실제 status와 보조 Check는 별도로 표시됨.
 
 ```
                      The Last Human — Component architecture & data flow
@@ -268,9 +266,7 @@ App private key·client secret·모델 자격은 서버에서 관리하고 Actio
 
 **웹훅 대신 Relay인 이유**: 현재 코드와 성공 기록의 결속을 GitHub 쪽에서도 독립 계산·확인하고 실행 로그로 남김. 사전 공유한 장기 시크릿 대신 OIDC를 사용하며, self-hosted 러너와 사용자 접속 경로를 갖추면 서버를 사내망에 둘 수 있음. 현재 데모의 공개 터널도 같은 TLH Server 연결 방식임. 대가: 러너 기동 지연, 체크 목록 한 줄.
 
-*#32 이후 실사용 필수 status의 기본 식별자는 `last-human/human-verified`임(개발은 `last-human/human-verified-dev`). 보조 Check "The Last Human"은 선택적으로 별도 표시되며 한 줄 통합은 다음 단계임. 저위험은 제품상 neutral/Not required이고 commit status에는 `success`, 보조 Check에는 `neutral`로 게시됨. Required 적용은 저장소 보호 규칙이 담당함.*
-
-**운영 전환은 별도:** #32 머지만으로 실행 중인 서버나 기존 설정이 바뀌지는 않음. 새 서버 코드와 `TLH_STATUS_CONTEXT`를 반영하고 재시작한 뒤, 열린 PR을 `sync --pr N`으로 동기화해 새 status를 게시함. 새 결과가 나온 것을 확인하고 필수 status와 발급 App을 전환하되 보호가 없는 구간을 만들지 않음. 환경에 명시된 옛 context는 새 기본값보다 우선하며, 과거 status 이력은 이름 변경으로 지워지지 않음.
+*필수 status는 `last-human/human-verified`, 보조 Check "The Last Human"은 선택 사항임. 저위험은 제품상 neutral/Not required이고 commit status에는 `success`, 보조 Check에는 `neutral`로 게시됨. Required 적용은 저장소 보호 규칙이 담당함.*
 
 ---
 
