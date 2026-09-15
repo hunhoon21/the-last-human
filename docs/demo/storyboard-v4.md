@@ -12,7 +12,7 @@
 | 시연 본편 | 00:24–01:26 (62초) | 00:25–01:34 (69초) | 보류 → 옆 파일 발견 → 코드 수정 → 새 커밋 재확인 → 머지. 발견 직후 GitHub 장애 한 컷(8초) |
 | 반증 | 01:26–01:31 (5초) | 01:34–01:39 (5초) | 한 문장 |
 | 대시보드 | 01:31–01:46 (15초) | 01:39–01:53 (14초) | 저장소·기간 선택 장면 제외. 세 문장 + 0.5초 침묵 |
-| 런타임 아키텍처 | 01:46–01:57 (11초) | — | 슬라이드로 이동 (7장) |
+| 아키텍처 | 01:46–01:57 (11초) | — | 슬라이드로 이동 (7장) |
 | 마무리 | 01:57–02:00 (3초) | 01:53–02:00 (7초) | "Pilot in command" 5초 + 무음 태그라인 카드 2초 |
 
 ### 이야기
@@ -25,7 +25,7 @@
 | GitHub 2026-08-17 장애 | 없음 | 발견 직후 한 컷. "같은 종류의 루프" · "게이트는 버그를 찾은 게 아니라 찾아야 할 사람에게 물었다"까지만 | 결함이 실재함을 보여 주되, The Last Human이 그날을 막았거나 줄였을 것이라는 주장은 하지 않음. 사후 분석은 원인을 AI에 귀속하지 않음 |
 | 책임의 표현 | "Verified human(가칭)" — 확인을 완료한 작성자의 역할 명칭 | **Human-verified** — 변경의 상태. 사람은 "on record"로 남음 | 검증되는 것은 변경이지 사람이 아님. 카드 · 대시보드 KPI · 계약 여섯째 줄이 같은 단어를 씀. 사람에게 등급을 주는 인상을 피함 |
 | 프레임 | 확인 절차 | 책임 프레임 — 이해가 책임의 전제 | 오프닝의 다섯 단어(responsible · understood · from the code · ban · check)가 본편·대시보드·결말에서 돌아옴 |
-| 런타임 아키텍처 | 영상 안 11초 | 슬라이드로 | 본편이 늘어난 만큼 설명 장면을 뺌. 실현 가능성은 실제 PR·체크·머지 화면이 이미 증명함 |
+| 아키텍처 | 영상 안 11초 | 슬라이드로 | 본편이 늘어난 만큼 설명 장면을 뺌. 실현 가능성은 실제 PR·체크·머지 화면이 이미 증명함 |
 
 ## 2. 구성
 
@@ -39,12 +39,18 @@
 
 제품은 00:15–00:25에 질문의 답으로 소개함: **"before a risky change merges, its author explains it — from the code. A check, not a ban."** 구성요소는 한꺼번에 나열하지 않고, 쓰이는 장면에서 화면에 보이는 이름 그대로 등장시킴. 내레이션은 일반어(the gate · the bot · the dashboard)를 씀.
 
-| 요소 | 화면에 보이는 이름 | 역할 | 등장 |
-| --- | --- | --- | --- |
-| **TLH Gate** | status check `comprehension-gate` (필수 상태 검사) | 작성자의 유효한 확인 없이는 머지할 수 없게 하는 관문. 위험도가 임계값에 미치지 않는 변경은 `Comprehension check not required`로 지나감 | 00:25 pending · 01:24 verified · 01:34 not required |
-| **TLH Bot** | GitHub App "The Last Human" · 카드 "Awaiting author explanation" → "Human Verified" | 위험 근거를 요약한 카드를 올리고, 웹 면담에서 질문을 만들고 답을 채점하며, 결과를 현재 커밋에 묶인 기록으로 남기고 PR 상태를 갱신함 | 00:41 카드 · 00:51–01:16 면담 · 01:24 Human Verified |
-| **TLH Dashboard** | "Comprehension dashboard" · 열 "Can answer" · KPI "Human-verified before merge" | CODEOWNERS 구역별로 게이트가 발동한 PR 중 머지 전에 확인된 비율, 답할 수 있는 사람 수, 예외, 근거 PR을 보여 줌. 이름 없이 수만 | 01:39 |
-| **Human-verified** | 카드 "Human Verified" + SHA · 대시보드 KPI | 현재 커밋의 변경을 작성자가 코드에 대고 설명해 확인 근거를 남긴 **변경의 상태**. 새 커밋이 오면 무효가 되고 게이트가 다시 물음. 사람에게 영구적인 자격이나 등급을 주지 않음 | 01:24 · 01:39 |
+넷 다 있어야 하는 층임. Gate는 "이 변경"에, Dashboard는 "이 조직"에 답하고, Bot은 Gate를 채우는 유일한 방법이며, Relay는 판정이 코드가 사는 곳에서 재계산되게 함.
+
+| 층 | 화면에 보이는 이름 | 역할 | 왜 있어야 하나 | 등장 |
+| --- | --- | --- | --- | --- |
+| **Gate** | 필수 체크 "Last Human — Awaiting author explanation" → "Human-verified · SHA" / "Not required" | 작성자의 확인 없이는 머지 불가. 임계값 미달은 Not required로 지나감 | 제품의 약속 그 자체. 없으면 조언 도구 | 00:25 대기 · 01:24 통과 · 01:34 미발동 |
+| **Bot** | 같은 줄의 카드 · 웹 면담 "Explain the change — from the code" · Accepted / Hold | 위험 근거 요약, 질문 생성, 채점, 현재 커밋에 묶인 기록 | Gate를 채우는 유일한 방법 | 00:41–01:24 |
+| **Relay** | "Last Human · relay / Relay PR #n", "Verify receipt …" | GitHub 이벤트를 OIDC로 서버에 전달하고, 영수증을 GitHub 쪽에서 재계산해 검증 | 판정이 코드가 사는 곳에서 다시 계산되고 로그로 남음 · 비밀 없이 저장소에 묶인 신원 · 서버를 사내망에 둘 수 있음 | 체크 목록 · Actions |
+| **Dashboard** | "Last Human dashboard" · "Human-verified before merge" · "Can answer" | CODEOWNERS 구역별 확인 비율·답할 수 있는 사람 수·예외·근거 PR. 이름 없이 수만 | Gate는 변경에, Dashboard는 조직에 답함. 어디까지 에이전트를 열어도 되는지의 지도 | 01:39 |
+
+**Human-verified**는 Gate가 통과했을 때의 변경의 상태. 새 커밋이 오면 무효가 되고 Gate가 다시 물음. 사람에게 자격이나 등급을 주지 않음. Relay의 대가: 러너 기동 지연(20–40초), Actions 분 사용, 체크 목록에 한 줄 더.
+
+현재 구현은 Gate가 두 줄(커밋 status `comprehension-gate` + check run "The Last Human")로 보임. 한 줄로 합치는 것은 다음 단계.
 
 ## 4. 장면별 스토리라인과 테이크
 
@@ -144,21 +150,93 @@ Azure Speech(en-US-AndrewMultilingualNeural)로 컷 단위 생성한 실측. 침
 - **표본 5 미만** 구역은 비율을 내지 않고 수만 보여줌.
 - **사후 인증은 소급하지 않음.** 머지 뒤 확인은 머지 전 비율을 올리지 않음. 30일 이력은 시드(Demo data 칩), `auth/` 0 → 1만 실제 증분.
 
-## 7. 런타임 아키텍처
+## 7. 아키텍처와 데이터 흐름
 
-영상에서는 뺐고 발표 슬라이드와 Q&A에서 씀. Bot이 유일한 쓰기 주체, Actions는 이벤트만 나름, 모델은 보조.
+영상에서는 뺐고 발표 슬라이드와 Q&A에서 씀. 서버는 조직이 두는 곳에서 돌고, 쓰기 주체는 서버 하나, 모델은 보조.
 
 ```
-PR author <-> Web interview <-> TLH Bot (GitHub App / Azure OpenAI) <-> LLM
-                                     ^
-PR -> Actions (events only) ---------+
-^                                    |
-+-- status comprehension-gate / card -+
-                                     |
-                              Receipts (server-owned, bound to SHA)
-                                     |
-                              Dashboard (per CODEOWNERS zone)
+                     The Last Human — Component architecture & data flow
+
+┌────────────────────────────────────────── GitHub ──────────────────────────────────────────┐
+│                                                                                             │
+│  Repository (code · CODEOWNERS)              Pull request                                   │
+│                                              ┌──────────────────────────────────────────┐   │
+│                                              │ Checks                                   │   │
+│                                              │ ● Last Human — Awaiting author explanation│  │
+│                                              │     → Human-verified · <sha>             │   │
+│                                              │     / Not required        Required  ◄──⑥─┼─┐ │
+│                                              │ ✓ Last Human · relay                     │ │ │
+│                                              │ ✓ repo CI (tests · lint)                 │ │ │
+│                                              └──────────────────────────────────────────┘ │ │
+│                                                        ▲ ⑧ a person merges                │ │
+│  GitHub Actions (runners)                              │                                   │ │
+│  ┌───────────────────────────────────────────────┐     │                                   │ │
+│  │ Relay — on PR open / new commit          ①    │     │                                   │ │
+│  │   forwards PR metadata + OIDC identity ──────┼─────┼──── ② ────────────────────────┐   │ │
+│  │                                               │     │                                │   │ │
+│  │ Verify — dispatched by the server        ⑤    │     │                                │   │ │
+│  │   checkout repo → recompute snapshot          │     │                                │   │ │
+│  │   → compare with server's receipt             │     │                                │   │ │
+│  │   → verified ✓ / ✗  (logged in Actions)  ─────┼─────┼─── ⑤' result ──────────────┐  │   │ │
+│  │ carries metadata only · no secrets · no write │     │                             │  │   │ │
+│  └───────────────────────────────────────────────┘     │                             │  │   │ │
+└────────────────────────────────────────────────────────┼─────────────────────────────┼──┼───┼─┘
+                                                         │                             ▼  ▼   │
+┌────────────────────┐                 ┌──────────────────────────────────────────────────────┴─┐
+│ Author (browser)   │── ③ answers ──►│ The Last Human server (Bot)                             │
+│ GitHub sign-in     │◄─ Accepted/Hold─│ where the org runs it — reachable by runners & people   │
+│ two questions,     │   + evidence    │ (public tunnel today · VPN + self-hosted runners for    │
+│ one line each      │                 │  a private deployment) · not a GitHub webhook receiver  │
+└────────────────────┘                 │                                                         │
+                                       │  Gate logic   diff → risk score → structure facts →     │
+┌────────────────────┐                 │               questions → grading                       │
+│ Org / leads        │── ⑨ reads ────►│  Receipts     ④ bound to head SHA (new commit ⇒ void)  │
+│ (browser)          │                 │  Publisher    ⑥ status · card  — the ONLY writer        │
+└────────────────────┘                 │  Dashboard    ⑦ per-CODEOWNERS-zone coverage           │
+                                       │  Store        snapshots · questions · receipts · merges │
+                                       │  Policy       risk rules · prompts (human-approved,     │
+                                       │               versioned into every snapshot)            │
+                                       └───────────────────────────┬─────────────────────────────┘
+                                                                   │ ②' questions · grading
+                                                                   ▼
+                                       ┌─────────────────────────────────────────────────────────┐
+                                       │ Model (Azure OpenAI) — assistive only                   │
+                                       │ writes the questions · grades the one-line evidence     │
+                                       │ never writes to GitHub · never sees credentials         │
+                                       └─────────────────────────────────────────────────────────┘
 ```
+
+**데이터 흐름**
+
+| # | From → To | 무엇이 움직이나 | 왜 중요한가 |
+| --- | --- | --- | --- |
+| ① | GitHub → Actions | PR 열림 / 새 커밋이 Relay를 시작 | 우리 쪽에 웹훅 수신자가 필요 없음 |
+| ② | Relay → Server | PR 메타데이터 + **OIDC 신원**(repo · workflow · repo id) | 이 저장소의 워크플로만 받음. 공유 시크릿 없음 |
+| ②' | Server ↔ Model | diff 사실 → 질문 두 개; 근거 한 줄 → 판정 | 모델은 제안만, 게이트를 결정하지 않음 |
+| ③ | Author ↔ Server | 보기 + 근거 한 줄 → Accepted / Hold + 근거 발췌 | 답변은 서버에만 남고 공개되지 않음 |
+| ④ | Server | head SHA에 묶인 영수증 | 새 커밋 ⇒ 영수증 무효 ⇒ 게이트가 다시 물음 |
+| ⑤ | Server → Actions | **Verify** dispatch: 러너가 저장소를 체크아웃해 **스냅샷을 재계산**하고 영수증과 비교 | 통과가 코드가 사는 곳에서 다시 유도되고 로그로 남음 |
+| ⑤' | Actions → Server | verified ✓ / ✗ | 서버는 이 뒤에만 발행 |
+| ⑥ | Server → GitHub | 체크: Awaiting → **Human-verified · sha** / Not required; 카드 | 서버가 유일한 쓰기 주체 |
+| ⑦ | Store + CODEOWNERS → Dashboard | 구역별 머지 전 확인 비율, 답할 수 있는 사람 수, 예외, 근거 PR | 이름 없이 수만 |
+| ⑧ | Person → GitHub | Merge | 봇은 절대 아님 |
+| ⑨ | Org → Server | 대시보드 열람 | 다음에 에이전트를 어디까지 열지 |
+
+**구성요소와 실행 위치**
+
+| 구성요소 | 실행 위치 | 갖고 있는 것 | 할 수 없는 것 |
+| --- | --- | --- | --- |
+| **Gate** | GitHub — PR의 필수 체크 | 상태 하나: awaiting / human-verified / not required | 스스로 판단 — Bot이 채움 |
+| **Bot** | The Last Human server | 앱 자격증명, 저장소, 정책 | 이 저장소의 워크플로나 로그인한 사람 외에는 호출 불가 |
+| **Relay** | GitHub Actions | 단기 OIDC 신원, PR 메타데이터, Verify용 체크아웃 | 비밀 보유, GitHub 쓰기, 모델 접근 |
+| **Dashboard** | 같은 서버 | 집계 수치 + 표기된 데모 시드 | 이름·순위·개인 이력 표시 |
+| **Model** | Azure OpenAI | 영속 데이터 없음 | 무엇도 쓰지 못함, 보조만 |
+
+**신뢰 경계 셋**: GitHub ↔ Actions(GitHub이 보증) · Actions ↔ Server(OIDC, 저장소에 묶임) · 사람 ↔ Server(같은 App의 GitHub 로그인). 비밀은 서버 안에서만 삶.
+
+**웹훅 대신 Relay인 이유**: 통과가 우리 서버의 주장이 아니라 GitHub 쪽에서 재계산·기록됨, 공유 시크릿 없이 저장소에 묶인 신원, 서버를 사내망에 둘 수 있음(self-hosted 러너 + VPN). 대가: 러너 기동 지연, 체크 목록 한 줄.
+
+*현재 구현은 Gate가 두 줄(status `comprehension-gate` + check run "The Last Human")로 보임. 한 줄로 합치는 것은 다음 단계.*
 
 ---
 
