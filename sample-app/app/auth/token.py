@@ -6,7 +6,7 @@ import os
 import time
 from dataclasses import dataclass
 
-from ..http_client import Transport, post_json
+from ..http_client import HttpError, Transport, post_json
 
 #: Margin applied when deciding expiry. Absorbs clock skew and round-trip time.
 CLOCK_SKEW_SEC = 60.0
@@ -45,7 +45,19 @@ async def refresh(transport: Transport, token: TokenSet) -> TokenSet:
 
 
 async def ensure_fresh(transport: Transport, token: TokenSet) -> TokenSet:
-    """Refresh a near-expiry token, otherwise return it unchanged."""
+    """Refresh a near-expiry token, otherwise return it unchanged.
+
+    Transient IdP failures (429/5xx) are already retried by the transport
+    (``post_json``, up to ``MAX_ATTEMPTS``). Retrying here again would
+    multiply the load on the IdP, so this layer only decides what happens
+    when the transport gives up: keep the existing session instead of
+    logging the user out (issue #18).
+    """
     if not is_expired(token):
         return token
-    return await refresh(transport, token)
+    try:
+        return await refresh(transport, token)
+    except HttpError as err:
+        if err.transient:
+            return token  # transport already retried; keep the current session alive
+        raise
